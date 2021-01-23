@@ -1,0 +1,84 @@
+function setup()
+    displayMode(FULLSCREEN)
+    font("Futura-CondensedExtraBold")
+    fontSize(24)
+    c = ElapsedTime
+    ns = (math.ceil(WIDTH/fontSize())+1) --num of streams
+    st = {} --stream table
+    for i = 1,ns do st[i] = RainStream(i,fontSize()) end
+end
+
+function draw()
+    if ElapsedTime > c + .2 then
+        c = ElapsedTime
+        for i = 1,ns do st[i]:drip() end
+    end
+    background(0,0,0,255)   
+    for i = 1,ns do st[i]:draw() end
+end
+
+RainStream = class()
+
+function RainStream:init(c,f)
+    --column, fontSize   
+    self.f = f --fontsize
+    --number of characters from top to bottom of screen
+    self.n = (math.ceil(HEIGHT/self.f)+1) 
+    self.x = WIDTH - (c*self.f) --x of column
+    self:reset()
+    self.s = math.random(self.n) --start  
+end
+
+function RainStream:reset()
+    self.t = kano() --text
+    local i
+    self.t = ""
+    for i = 1,self.n do self.t = self.t .. self:randchar() end
+    self.tl = math.random(self.n) --tail length
+    self.s = 0
+end
+
+function RainStream:randchar()
+    local r, c
+    r = math.random((string.len(kano())/3))
+    return string.sub(kano(),1+(r*3),(r*3)+3)   
+end
+
+function RainStream:draw()
+    local dt --draw tail to here
+    fill(0, 255, 0 , 255) --bright
+    if self.s <= self.n then
+        text(string.sub(self.t,1+(self.s*3),(self.s*3)+3),self.x,HEIGHT - (self.s*self.f))
+    end
+    fill(0, 255, 0 , 128) --dim
+    if self.s - self.tl < 0 then 
+        dt = 0 --draw to top of screen
+    else 
+        dt = self.s - self.tl 
+    end
+    local j
+    for j = (self.s-1),dt,-1 do --draw dim chracters going up
+        --kano characters are a length of 2 in a string
+        --don't know why, they just are
+        text(string.sub(self.t,1+(j*3),(j*3)+3),self.x,HEIGHT - (j*self.f))
+    end 
+end
+
+function RainStream:drip()
+    self.s = self.s + 1 --move drip down
+    if math.random(100) > 50 then
+        --rand a chracter
+        local r = math.random(self.n-6)+3
+        local nt = string.sub(self.t,1,(r*3))
+        nt = nt .. self.randchar()
+        nt = nt .. string.sub(self.t,(r*3)+4)
+        self.t = nt 
+    end
+    --check for reset
+    if self.s > (self.n + self.tl) then self:reset() end
+end
+ 
+function kano()
+    --these aren't the true chracters, just ones I found
+    return  "あかさたないきしちにうくすつぬえけせてねおこそとのはまやらわひみりをふむゆるんへめれ"
+end
